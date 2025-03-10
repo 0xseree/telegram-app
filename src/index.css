@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+
+
+.no-spinner::-webkit-inner-spin-button,
+  .no-spinner::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Hide number input arrows for Firefox */
+  .no-spinner {
+    -moz-appearance: textfield;
+  }
+
+
+
+  body{
+    background-color: white;
+  }
