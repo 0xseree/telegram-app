@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const TelegramBot = require("node-telegram-bot-api");
-const { Markup } = require("telegraf");
+const { ethers } = require("ethers");
 const { InitData, validateInitData } = require('@telegram-apps/init-data-node');
 require("dotenv").config();
 
@@ -39,29 +39,6 @@ bot.on("message", async (msg) => {
 
   console.log(`Received message: ${message}`);
 });
-
-// function verifyTelegramWebAppData(telegramInitData) {
-//   const initData = new URLSearchParams(telegramInitData);
-//   const hash = initData.get("hash");
-//   initData.delete("hash");
-
-//   const dataCheckString = Array.from(initData.entries())
-//     .sort()
-//     .map(([key, value]) => `${key}=${value}`)
-//     .join("\n");
-
-//   const secretKey = crypto
-//     .createHmac("sha256", "WebAppData")
-//     .update(BOT_TOKEN)
-//     .digest();
-
-//   const calculatedHash = crypto
-//     .createHmac("sha256", secretKey)
-//     .update(dataCheckString)
-//     .digest("hex");
-
-//   return calculatedHash === hash;
-// }
 
 // Endpoint to verify and provide user data
 app.post("/api/auth", async (req, res) => {
@@ -121,6 +98,36 @@ app.post("/api/auth", async (req, res) => {
   } catch (error) {
     console.error("Error processing init data:", error);
     return res.status(400).json({ error: "Invalid init data" });
+  }
+});
+
+// Endpoint to get balance
+app.get("/api/getBalance", async (req, res) => {
+  try {
+    const provider = new ethers.JsonRpcProvider(process.env.SCROLL_RPC_URL);
+    console.log("Provider connected");
+    const privateKey = process.env.PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error("Private key is not defined");
+    }
+    const wallet = new ethers.Wallet(privateKey, provider);
+    const contractAddress = process.env.SETB_CONTRACT_ADDRESS;
+
+    if (!contractAddress) {
+      throw new Error("Contract address is not defined");
+    }
+
+    const abi = [
+      "function balanceOf(address owner) view returns (uint256)"
+    ];
+
+    const contract = new ethers.Contract(contractAddress, abi, wallet);
+    const balance = await contract.balanceOf(wallet.address);
+
+    res.json({ balance: ethers.formatUnits(balance, 8) });
+  } catch (error) {
+    console.error("Error fetching balance:", error);
+    res.status(500).json({ error: "Error fetching balance" });
   }
 });
 

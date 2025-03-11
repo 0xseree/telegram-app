@@ -19,7 +19,7 @@ interface UserData {
 export function GlobalProvider({ children }: React.PropsWithChildren) {
   const [receiver, setReceiver] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
-  const [balance, setBalance] = useState<string>("143421.25");
+  const [balance, setBalance] = useState<string>("0");
   const [processing, setProcessing] = useState<boolean>(false);
   const [userData, setUserData] = useState<UserData | null>(null);
 
