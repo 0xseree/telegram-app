@@ -1,8 +1,6 @@
-import { useGlobal } from "../../contexts/global";
 import { NotificationIcon } from "../svg/NotificationIcon";
 
 export default function UserHeader() {
-  const { userData } = useGlobal();
 
   return (
     <div className="w-full flex justify-between items-center p-5">

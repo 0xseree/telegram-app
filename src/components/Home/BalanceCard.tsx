@@ -1,7 +1,8 @@
 import { useGlobal } from "../../contexts/global";
 
 export default function BalanceCard() {
-  const { balance } = useGlobal();
+  const globalContext = useGlobal();
+  const balance = globalContext ? globalContext.balance.toString() : "0";
 
   function formatBalance(value: number): string {
     return value.toLocaleString("en-US", {
