@@ -3,6 +3,7 @@ const cors = require("cors");
 const axios = require("axios");
 const TelegramBot = require("node-telegram-bot-api");
 const { Markup } = require("telegraf");
+const { InitData, validateInitData } = require('@telegram-apps/init-data-node');
 require("dotenv").config();
 
 const app = express();
@@ -23,7 +24,7 @@ bot.onText(/\/start/, (msg) => {
         [
           {
             text: "🚀 Launch Mini App",
-            web_app: { url: "https://3b3e-102-90-81-90.ngrok-free.app" },
+            web_app: { url: "https://87e0-89-116-154-84.ngrok-free.app" },
           },
         ],
       ],
@@ -39,29 +40,28 @@ bot.on("message", async (msg) => {
   console.log(`Received message: ${message}`);
 });
 
-// Verify Telegram data
-function verifyTelegramWebAppData(telegramInitData) {
-  const initData = new URLSearchParams(telegramInitData);
-  const hash = initData.get("hash");
-  initData.delete("hash");
+// function verifyTelegramWebAppData(telegramInitData) {
+//   const initData = new URLSearchParams(telegramInitData);
+//   const hash = initData.get("hash");
+//   initData.delete("hash");
 
-  const dataCheckString = Array.from(initData.entries())
-    .sort()
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
+//   const dataCheckString = Array.from(initData.entries())
+//     .sort()
+//     .map(([key, value]) => `${key}=${value}`)
+//     .join("\n");
 
-  const secretKey = crypto
-    .createHmac("sha256", "WebAppData")
-    .update(BOT_TOKEN)
-    .digest();
+//   const secretKey = crypto
+//     .createHmac("sha256", "WebAppData")
+//     .update(BOT_TOKEN)
+//     .digest();
 
-  const calculatedHash = crypto
-    .createHmac("sha256", secretKey)
-    .update(dataCheckString)
-    .digest("hex");
+//   const calculatedHash = crypto
+//     .createHmac("sha256", secretKey)
+//     .update(dataCheckString)
+//     .digest("hex");
 
-  return calculatedHash === hash;
-}
+//   return calculatedHash === hash;
+// }
 
 // Endpoint to verify and provide user data
 app.post("/api/auth", async (req, res) => {
@@ -71,49 +71,56 @@ app.post("/api/auth", async (req, res) => {
     return res.status(400).json({ error: "Missing init data" });
   }
 
-  // Verify the data comes from Telegram
-  if (!verifyTelegramWebAppData(initData)) {
-    return res.status(403).json({ error: "Invalid authentication" });
-  }
+  console.log("Received init data:", initData);
 
-  // Extract user info from init data
-  const parsedInitData = Object.fromEntries(new URLSearchParams(initData));
-  const user = JSON.parse(parsedInitData.user);
-
-  // Get additional user data using Telegram Bot API if needed
   try {
-    // You can fetch more user details if needed
-    const response = await axios.get(
-      `https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=${user.id}`
-    );
-    const additionalUserData = response.data.result;
+    const parsedInitData = new InitData(initData);
+    
+    const isValid = await validateInitData(parsedInitData, BOT_TOKEN);
 
-    return res.json({
-      authenticated: true,
-      user: {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        username: user.username,
-        photo_url: user.photo_url,
-        // Add any additional fields from the getChat response
-        bio: additionalUserData.bio,
-        profile_photos: additionalUserData.photo,
-      },
-    });
+    if (!isValid) {
+      console.log("Invalid init data");
+      return res.status(403).json({ error: "Invalid authentication" });
+    }
+
+    console.log("Valid init data");
+
+    const user = parsedInitData.user;
+
+    try {
+      const response = await axios.get(
+        `https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=${user.id}`
+      );
+      const additionalUserData = response.data.result;
+
+      return res.json({
+        authenticated: true,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          username: user.username,
+          language_code: user.language_code,
+          bio: additionalUserData.bio,
+          profile_photos: additionalUserData.photo,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      return res.json({
+        authenticated: true,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          username: user.username,
+          language_code: user.language_code,
+        },
+      });
+    }
   } catch (error) {
-    console.error("Error fetching user data:", error);
-    // Return basic data even if additional fetch fails
-    return res.json({
-      authenticated: true,
-      user: {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        username: user.username,
-        photo_url: user.photo_url,
-      },
-    });
+    console.error("Error processing init data:", error);
+    return res.status(400).json({ error: "Invalid init data" });
   }
 });
 
