@@ -4,11 +4,12 @@ import Receive from "../pages/Receive/Receive";
 import Transfer from "../pages/Transfer/Transfer";
 import { PayWithQRCode } from "../pages/Transfer/PayWithQRCode";
 import { TransactionHistory } from "../pages/History/TransactionHistory";
-import { initData } from '@telegram-apps/sdk';
+import { initData, init } from '@telegram-apps/sdk-react';
 
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useGlobal } from "../contexts/global";
+
 
 const AppRoutes = () => {
   const { setUserData } = useGlobal();
@@ -16,6 +17,7 @@ const AppRoutes = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    init();
     initData.restore();
     console.log("AppRoutes useEffect called");
     const authenticateUser = async () => {
