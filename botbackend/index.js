@@ -3,7 +3,7 @@ const cors = require("cors");
 const axios = require("axios");
 const TelegramBot = require("node-telegram-bot-api");
 const { ethers } = require("ethers");
-const { InitData, validateInitData } = require('@telegram-apps/init-data-node');
+const { InitData, validateInitData } = require("@telegram-apps/init-data-node");
 require("dotenv").config();
 
 const app = express();
@@ -12,7 +12,11 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+  })
+);
 app.use(express.json());
 
 bot.onText(/\/start/, (msg) => {
@@ -52,7 +56,7 @@ app.post("/api/auth", async (req, res) => {
 
   try {
     const parsedInitData = new InitData(initData);
-    
+
     const isValid = await validateInitData(parsedInitData, BOT_TOKEN);
 
     if (!isValid) {
@@ -104,7 +108,9 @@ app.post("/api/auth", async (req, res) => {
 // Endpoint to get balance
 app.get("/api/getBalance", async (req, res) => {
   try {
-    const provider = new ethers.JsonRpcProvider(process.env.SCROLL_RPC_URL);
+    const provider = new ethers.JsonRpcProvider(
+      process.env.SCROLL_RPC_URL
+    );
     console.log("Provider connected");
     const privateKey = process.env.PRIVATE_KEY;
     if (!privateKey) {
@@ -117,14 +123,14 @@ app.get("/api/getBalance", async (req, res) => {
       throw new Error("Contract address is not defined");
     }
 
-    const abi = [
-      "function balanceOf(address owner) view returns (uint256)"
-    ];
+    const abi = ["function balanceOf(address owner) view returns (uint256)"];
 
     const contract = new ethers.Contract(contractAddress, abi, wallet);
     const balance = await contract.balanceOf(wallet.address);
+    console.log("Balance:", ethers.formatUnits(balance, 18));
 
-    res.json({ balance: ethers.formatUnits(balance, 8) });
+    res.setHeader("Content-Type", "application/json");
+    res.json({ balance: ethers.formatUnits(balance, 10) });
   } catch (error) {
     console.error("Error fetching balance:", error);
     res.status(500).json({ error: "Error fetching balance" });
