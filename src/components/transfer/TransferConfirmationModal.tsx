@@ -1,6 +1,7 @@
 import { useGlobal } from "../../contexts/global";
 import { Modal } from "../UI/Modal";
 import axios from "axios";
+import { useState } from "react";
 
 export const TransferConfirmationModal = ({
   isOpen,
@@ -10,6 +11,8 @@ export const TransferConfirmationModal = ({
   onClose: () => void;
 }) => {
   const { amount, receiver, setProcessing, processing } = useGlobal();
+  const [success, setSuccess] = useState<boolean>(false);
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
 
   function formatAmount(value: number): string {
     return value.toLocaleString("en-US", {
@@ -29,6 +32,8 @@ export const TransferConfirmationModal = ({
 
       if (response.data.success) {
         console.log("Transaction successful:", response.data.transactionHash);
+        setSuccess(true);
+        setTransactionHash(response.data.transactionHash);
       } else {
         console.error("Transaction failed");
       }
@@ -58,12 +63,28 @@ export const TransferConfirmationModal = ({
 
         <div className="w-full mt-28">
           <button
-            disabled={processing}
+            disabled={processing || success}
             onClick={confirmTransfer}
             className="w-full px-3 py-5 items-center justify-center text-xl text-white bg-[#1CA36E] rounded-full"
           >
-            {!processing ? "Confirm Transfer" : "Processing ..."}
+            {!processing
+              ? success
+                ? "Transaction Successful!"
+                : "Confirm Transfer"
+              : "Processing ..."}
           </button>
+          {success && transactionHash && (
+            <div className="mt-4 text-center">
+              <a
+                href={`https://sepolia.scrollscan.com/tx/${transactionHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 underline"
+              >
+                View Transaction on ScrollScan
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </Modal>
