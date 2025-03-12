@@ -5,7 +5,7 @@ import Transfer from "../pages/Transfer/Transfer";
 import { PayWithQRCode } from "../pages/Transfer/PayWithQRCode";
 import { TransactionHistory } from "../pages/History/TransactionHistory";
 import { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";
 import { useGlobal } from "../contexts/global";
 
 declare global {
@@ -38,8 +38,10 @@ const AppRoutes = () => {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const response = await axios.get("https://511a-89-116-154-84.ngrok-free.app/api/getBalance");
-        setBalance(response.data.balance);
+        const response = await fetch("http://localhost:3000/api/getBalance", {method: "GET", headers: {"Content-Type": "application/json"}});
+        const balance_json = await response.json();
+        setBalance(balance_json.balance);
+        console.log("Fetching balance: ", balance_json.balance);
       } catch (error) {
         console.error("Error fetching balance:", error);
         setError("Error fetching balance");
