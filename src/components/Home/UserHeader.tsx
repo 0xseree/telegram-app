@@ -11,7 +11,7 @@ export default function UserHeader() {
 
         <div>
           <h3 className="text-xl font-bold">
-            Lance
+            lancenonce
           </h3>
           <p className="text-sm text-gray-500">You are Welcome!</p>
         </div>

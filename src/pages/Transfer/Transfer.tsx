@@ -94,7 +94,7 @@ export default function Transfer() {
                 <input
                   type="text"
                   className="w-full mt-2 outline-none border-none text-xl"
-                  placeholder="collins_adi"
+                  placeholder="telegram_username"
                   value={receiver}
                   onChange={(e) => setReceiver(e.target.value)}
                 />

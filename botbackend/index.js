@@ -108,9 +108,7 @@ app.post("/api/auth", async (req, res) => {
 // Endpoint to get balance
 app.get("/api/getBalance", async (req, res) => {
   try {
-    const provider = new ethers.JsonRpcProvider(
-      process.env.SCROLL_RPC_URL
-    );
+    const provider = new ethers.JsonRpcProvider(process.env.SCROLL_RPC_URL);
     console.log("Provider connected");
     const privateKey = process.env.PRIVATE_KEY;
     if (!privateKey) {
@@ -134,6 +132,42 @@ app.get("/api/getBalance", async (req, res) => {
   } catch (error) {
     console.error("Error fetching balance:", error);
     res.status(500).json({ error: "Error fetching balance" });
+  }
+});
+
+app.post("/transfer", async (req, res) => {
+  const { amount } = req.body;
+  const receiverAddress = "0xa25347e4fd683dA05C849760b753a4014265254e";
+
+  try {
+    const provider = new ethers.JsonRpcProvider(
+      process.env.SCROLL_RPC_URL
+    );
+    console.log("Provider connected for transfer");
+    const privateKey = process.env.PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error("Private key is not defined");
+    }
+    const wallet = new ethers.Wallet(privateKey, provider);
+    const contractAddress = process.env.SETB_CONTRACT_ADDRESS;
+
+    if (!contractAddress) {
+      throw new Error("Contract address is not defined");
+    }
+
+    const abi = [
+      "function transfer(address to, uint256 amount) public returns (bool)",
+    ];
+
+    const contract = new ethers.Contract(contractAddress, abi, wallet);
+    const amountInWei = ethers.parseUnits(amount.toString(), 10);
+    const tx = await contract.transfer(receiverAddress, amountInWei);
+    await tx.wait();
+
+    res.json({ success: true, transactionHash: tx.hash });
+  } catch (error) {
+    console.error("Error processing transfer:", error);
+    res.status(500).json({ error: "Error processing transfer" });
   }
 });
 

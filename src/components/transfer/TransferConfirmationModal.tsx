@@ -1,5 +1,6 @@
 import { useGlobal } from "../../contexts/global";
 import { Modal } from "../UI/Modal";
+import axios from "axios";
 
 export const TransferConfirmationModal = ({
   isOpen,
@@ -17,9 +18,25 @@ export const TransferConfirmationModal = ({
     });
   }
 
-  const confirmTransfer = () => {
+  const confirmTransfer = async () => {
     setProcessing(true);
     console.log("Transaction Processing? .... ");
+
+    try {
+      const response = await axios.post("http://localhost:3000/transfer", {
+        amount: parseFloat(amount),
+      });
+
+      if (response.data.success) {
+        console.log("Transaction successful:", response.data.transactionHash);
+      } else {
+        console.error("Transaction failed");
+      }
+    } catch (error) {
+      console.error("Error processing transfer:", error);
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
