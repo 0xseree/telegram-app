@@ -109,7 +109,6 @@ app.post("/api/auth", async (req, res) => {
 app.get("/api/getBalance", async (req, res) => {
   try {
     const provider = new ethers.JsonRpcProvider(process.env.SCROLL_RPC_URL);
-    console.log("Provider connected");
     const privateKey = process.env.PRIVATE_KEY;
     if (!privateKey) {
       throw new Error("Private key is not defined");
@@ -125,10 +124,9 @@ app.get("/api/getBalance", async (req, res) => {
 
     const contract = new ethers.Contract(contractAddress, abi, wallet);
     const balance = await contract.balanceOf(wallet.address);
-    console.log("Balance:", ethers.formatUnits(balance, 18));
 
     res.setHeader("Content-Type", "application/json");
-    res.json({ balance: ethers.formatUnits(balance, 10) });
+    res.json({ balance: balance.toString() });
   } catch (error) {
     console.error("Error fetching balance:", error);
     res.status(500).json({ error: "Error fetching balance" });
@@ -140,10 +138,7 @@ app.post("/transfer", async (req, res) => {
   const receiverAddress = "0xa25347e4fd683dA05C849760b753a4014265254e";
 
   try {
-    const provider = new ethers.JsonRpcProvider(
-      process.env.SCROLL_RPC_URL
-    );
-    console.log("Provider connected for transfer");
+    const provider = new ethers.JsonRpcProvider(process.env.SCROLL_RPC_URL);
     const privateKey = process.env.PRIVATE_KEY;
     if (!privateKey) {
       throw new Error("Private key is not defined");
@@ -160,7 +155,7 @@ app.post("/transfer", async (req, res) => {
     ];
 
     const contract = new ethers.Contract(contractAddress, abi, wallet);
-    const amountInWei = ethers.parseUnits(amount.toString(), 10);
+    const amountInWei = ethers.parseUnits(amount.toString(), 8);
     const tx = await contract.transfer(receiverAddress, amountInWei);
     await tx.wait();
 

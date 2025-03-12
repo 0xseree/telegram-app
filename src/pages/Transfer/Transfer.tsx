@@ -27,10 +27,7 @@ export default function Transfer() {
 
   return (
     <section className="w-full ">
-      <TransferConfirmationModal
-        isOpen={isOpen}
-        onClose={onModalClose}
-      />
+      <TransferConfirmationModal isOpen={isOpen} onClose={onModalClose} />
 
       <div className="w-full flex items-center justify-between  p-5 fixed top-0 left-0 right-0 z-10 bg-white">
         <span onClick={goBack} className="text-2xl">
