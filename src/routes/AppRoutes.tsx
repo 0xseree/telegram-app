@@ -38,7 +38,7 @@ const AppRoutes = () => {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const response = await fetch("https://3055-102-90-79-14.ngrok-free.app/api/getBalance", {
+        const response = await fetch("https://bot-backend-jbk3.onrender.com/api/getBalance", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
