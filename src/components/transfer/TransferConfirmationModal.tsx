@@ -26,7 +26,7 @@ export const TransferConfirmationModal = ({
     console.log("Transaction Processing? .... ");
 
     try {
-      const response = await axios.post("http://localhost:3000/transfer", {
+      const response = await axios.post("https://3055-102-90-79-14.ngrok-free.app/transfer", {
         amount: parseFloat(amount),
       });
 

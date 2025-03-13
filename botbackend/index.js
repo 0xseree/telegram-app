@@ -28,7 +28,7 @@ bot.onText(/\/start/, (msg) => {
         [
           {
             text: "🚀 Launch Mini App",
-            web_app: { url: "https://87e0-89-116-154-84.ngrok-free.app" },
+            web_app: { url: "https://telegram-app-o4q8.onrender.com" },
           },
         ],
       ],
