@@ -3,7 +3,6 @@ const cors = require("cors");
 const axios = require("axios");
 const TelegramBot = require("node-telegram-bot-api");
 const { ethers } = require("ethers");
-const { InitData, validateInitData } = require("@telegram-apps/init-data-node");
 require("dotenv").config();
 
 const app = express();
@@ -44,66 +43,7 @@ bot.on("message", async (msg) => {
   console.log(`Received message: ${message}`);
 });
 
-// Endpoint to verify and provide user data
-app.post("/api/auth", async (req, res) => {
-  const { initData } = req.body;
 
-  if (!initData) {
-    return res.status(400).json({ error: "Missing init data" });
-  }
-
-  console.log("Received init data:", initData);
-
-  try {
-    const parsedInitData = new InitData(initData);
-
-    const isValid = await validateInitData(parsedInitData, BOT_TOKEN);
-
-    if (!isValid) {
-      console.log("Invalid init data");
-      return res.status(403).json({ error: "Invalid authentication" });
-    }
-
-    console.log("Valid init data");
-
-    const user = parsedInitData.user;
-
-    try {
-      const response = await axios.get(
-        `https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=${user.id}`
-      );
-      const additionalUserData = response.data.result;
-
-      return res.json({
-        authenticated: true,
-        user: {
-          id: user.id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          username: user.username,
-          language_code: user.language_code,
-          bio: additionalUserData.bio,
-          profile_photos: additionalUserData.photo,
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      return res.json({
-        authenticated: true,
-        user: {
-          id: user.id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          username: user.username,
-          language_code: user.language_code,
-        },
-      });
-    }
-  } catch (error) {
-    console.error("Error processing init data:", error);
-    return res.status(400).json({ error: "Invalid init data" });
-  }
-});
 
 // Endpoint to get balance
 app.get("/api/getBalance", async (req, res) => {
