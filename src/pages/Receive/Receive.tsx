@@ -1,11 +1,10 @@
 import { FaArrowLeft } from "react-icons/fa6";
 import QRCode from "react-qr-code";
-import { useState } from "react";
 import { TransactionComponent } from "../../components/UI/TransactionComponent";
 import { Link } from "react-router-dom";
 
 export default function Receive() {
-  const [userData, setUserData] = useState<string>("collinsadi");
+  const userData = "collinsadi";
 
   function goBack() {
     window.history.back();
