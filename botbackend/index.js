@@ -66,11 +66,8 @@ app.get("/api/getBalance", async (req, res) => {
       to: contractAddress,
       data: contract.interface.encodeFunctionData("balanceOf", [wallet.address])
     });
-<<<<<<< Updated upstream
-=======
 
     const humanReadableBalance = ethers.formatUnits(balance, 8);
->>>>>>> Stashed changes
 
     res.setHeader("Content-Type", "application/json");
     res.json({ balance: humanReadableBalance });

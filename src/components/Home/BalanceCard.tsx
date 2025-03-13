@@ -3,11 +3,17 @@ import { ethers } from "ethers";
 
 export default function BalanceCard() {
   const globalContext = useGlobal();
-  console.log("balance: ", globalContext.balance);
+  console.log("balance: ", globalContext.balance.toString());
   const balance = globalContext ? globalContext.balance.toString() : "0";
 
   function formatBalance(value: string): string {
-    const formattedValue = ethers.formatUnits(value, 8);
+    const [integerPart, fractionalPart = ""] = value.split(".");
+    const paddedValue = integerPart + fractionalPart.padEnd(8, "0");
+    
+    const bigIntValue = BigInt(paddedValue);
+    
+    const formattedValue = ethers.formatUnits(bigIntValue, 8);
+    
     return parseFloat(formattedValue).toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
