@@ -22,7 +22,7 @@ app.use(express.json());
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
 
-  bot.sendMessage(chatId, "Welcome to the Seree Mini App 😁", {
+  bot.sendMessage(chatId, msg.chat.first_name + " Welcome to the Seree Mini App 😁", {
     reply_markup: {
       keyboard: [
         [
