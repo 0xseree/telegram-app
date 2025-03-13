@@ -45,22 +45,27 @@ bot.on("message", async (msg) => {
 // Endpoint to get balance
 app.get("/api/getBalance", async (req, res) => {
   try {
+
     const provider = new ethers.JsonRpcProvider(process.env.SCROLL_RPC_URL);
-    const privateKey = process.env.PRIVATE_KEY;
-    if (!privateKey) {
-      throw new Error("Private key is not defined");
-    }
-    const wallet = new ethers.Wallet(privateKey, provider);
+    // const privateKey = process.env.PRIVATE_KEY;
+    // if (!privateKey) {
+    //   throw new Error("Private key is not defined");
+    // }
+    // const wallet = new ethers.Wallet(privateKey, provider);
     const contractAddress = process.env.SETB_CONTRACT_ADDRESS;
 
     if (!contractAddress) {
       throw new Error("Contract address is not defined");
     }
 
-    const abi = ["function balanceOf(address owner) view returns (uint256)"];
+    // const abi = ["function balanceOf(address owner) view returns (uint256)"];
 
-    const contract = new ethers.Contract(contractAddress, abi, wallet);
-    const balance = await contract.balanceOf(wallet.address);
+    // const contract = new ethers.Contract(contractAddress, abi, wallet);
+    // const balance = await contract.balanceOf(wallet.address);
+    const balance = await provider.call({
+      to: contractAddress,
+      data: contract.interface.encodeFunctionData("balanceOf", [walletAddress])
+    });
 
     res.setHeader("Content-Type", "application/json");
     res.json({ balance: balance.toString() });
