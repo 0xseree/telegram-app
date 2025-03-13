@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const axios = require("axios");
 const TelegramBot = require("node-telegram-bot-api");
 const { ethers } = require("ethers");
 require("dotenv").config();
@@ -11,29 +10,29 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 // Middleware
-app.use(
-  cors({
-    origin: true,
-  })
-);
+app.use(cors());
 app.use(express.json());
 
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
 
-  bot.sendMessage(chatId, msg.chat.first_name + " Welcome to the Seree Mini App 😁", {
-    reply_markup: {
-      keyboard: [
-        [
-          {
-            text: "🚀 Launch Mini App",
-            web_app: { url: "https://telegram-app-o4q8.onrender.com" },
-          },
+  bot.sendMessage(
+    chatId,
+    msg.chat.first_name + " Welcome to the Seree Mini App 😁",
+    {
+      reply_markup: {
+        keyboard: [
+          [
+            {
+              text: "🚀 Launch Mini App",
+              web_app: { url: "https://telegram-app-o4q8.onrender.com" },
+            },
+          ],
         ],
-      ],
-      resize_keyboard: true,
-    },
-  });
+        resize_keyboard: true,
+      },
+    }
+  );
 });
 
 bot.on("message", async (msg) => {
@@ -42,8 +41,6 @@ bot.on("message", async (msg) => {
 
   console.log(`Received message: ${message}`);
 });
-
-
 
 // Endpoint to get balance
 app.get("/api/getBalance", async (req, res) => {
