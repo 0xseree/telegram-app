@@ -66,9 +66,14 @@ app.get("/api/getBalance", async (req, res) => {
       to: contractAddress,
       data: contract.interface.encodeFunctionData("balanceOf", [wallet.address])
     });
+<<<<<<< Updated upstream
+=======
+
+    const humanReadableBalance = ethers.formatUnits(balance, 8);
+>>>>>>> Stashed changes
 
     res.setHeader("Content-Type", "application/json");
-    res.json({ balance: balance.toString() });
+    res.json({ balance: humanReadableBalance });
   } catch (error) {
     console.error("Error fetching balance:", error);
     res.status(500).json({ error: "Error fetching balance" });
