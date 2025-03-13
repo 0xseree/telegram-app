@@ -4,12 +4,10 @@ import Receive from "../pages/Receive/Receive";
 import Transfer from "../pages/Transfer/Transfer";
 import { PayWithQRCode } from "../pages/Transfer/PayWithQRCode";
 import { TransactionHistory } from "../pages/History/TransactionHistory";
-
 import { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";
 import { useGlobal } from "../contexts/global";
 
-// Define the Telegram WebApp global object
 declare global {
   interface Window {
     Telegram: {
@@ -32,28 +30,29 @@ declare global {
   }
 }
 
-
 const AppRoutes = () => {
-  const { setUserData } = useGlobal();
-  const [loading, setLoading] = useState<boolean>(false);
+  const { setUserData, setBalance } = useGlobal();
+  // const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (window.Telegram && window.Telegram.WebApp) {
-      const telegramUser = window.Telegram.WebApp.initData;
-
-      // alert(telegramUser)
-      if (telegramUser) {
-        setUserData(telegramUser);
+    const fetchBalance = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/getBalance", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        const balance_json = await response.json();
+        setBalance(balance_json.balance);
+        console.log("Fetching balance: ", balance_json.balance);
+      } catch (error) {
+        console.error("Error fetching balance:", error);
+        setError("Error fetching balance");
       }
-    }else{
-      setError("Error")
-    }
-  }, []);
+    };
 
-  if (loading) {
-    return <div className="loading">Loading user data...</div>;
-  }
+    fetchBalance();
+  }, [setUserData, setBalance]);
 
   if (error) {
     return <div className="error">Error: {error}</div>;
@@ -61,13 +60,15 @@ const AppRoutes = () => {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/receive" element={<Receive />} />
-        <Route path="/transfer" element={<Transfer />} />
-        <Route path="/pay-with-qr-code" element={<PayWithQRCode />} />
-        <Route path="/transactions" element={<TransactionHistory />} />
-      </Routes>
+      <div>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/receive" element={<Receive />} />
+          <Route path="/transfer" element={<Transfer />} />
+          <Route path="/pay-with-qr-code" element={<PayWithQRCode />} />
+          <Route path="/transactions" element={<TransactionHistory />} />
+        </Routes>
+      </div>
     </Router>
   );
 };

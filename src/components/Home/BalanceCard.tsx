@@ -1,10 +1,14 @@
 import { useGlobal } from "../../contexts/global";
+import { ethers } from "ethers";
 
 export default function BalanceCard() {
-  const { balance } = useGlobal();
+  const globalContext = useGlobal();
+  console.log("balance: ", globalContext.balance);
+  const balance = globalContext ? globalContext.balance.toString() : "0";
 
-  function formatBalance(value: number): string {
-    return value.toLocaleString("en-US", {
+  function formatBalance(value: string): string {
+    const formattedValue = ethers.formatUnits(value, 8);
+    return parseFloat(formattedValue).toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -35,9 +39,7 @@ export default function BalanceCard() {
               </div>
 
               <div>
-                <h3 className="text-2xl font-bold">
-                  {formatBalance(parseFloat(balance))}
-                </h3>
+                <h3 className="text-2xl font-bold">{formatBalance(balance)}</h3>
               </div>
             </div>
           </div>

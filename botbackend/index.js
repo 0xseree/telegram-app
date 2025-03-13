@@ -2,7 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const TelegramBot = require("node-telegram-bot-api");
-const { Markup } = require("telegraf");
+const { ethers } = require("ethers");
+const { InitData, validateInitData } = require("@telegram-apps/init-data-node");
 require("dotenv").config();
 
 const app = express();
@@ -11,7 +12,11 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+  })
+);
 app.use(express.json());
 
 bot.onText(/\/start/, (msg) => {
@@ -23,7 +28,7 @@ bot.onText(/\/start/, (msg) => {
         [
           {
             text: "🚀 Launch Mini App",
-            web_app: { url: "https://3b3e-102-90-81-90.ngrok-free.app" },
+            web_app: { url: "https://87e0-89-116-154-84.ngrok-free.app" },
           },
         ],
       ],
@@ -39,30 +44,6 @@ bot.on("message", async (msg) => {
   console.log(`Received message: ${message}`);
 });
 
-// Verify Telegram data
-function verifyTelegramWebAppData(telegramInitData) {
-  const initData = new URLSearchParams(telegramInitData);
-  const hash = initData.get("hash");
-  initData.delete("hash");
-
-  const dataCheckString = Array.from(initData.entries())
-    .sort()
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  const secretKey = crypto
-    .createHmac("sha256", "WebAppData")
-    .update(BOT_TOKEN)
-    .digest();
-
-  const calculatedHash = crypto
-    .createHmac("sha256", secretKey)
-    .update(dataCheckString)
-    .digest("hex");
-
-  return calculatedHash === hash;
-}
-
 // Endpoint to verify and provide user data
 app.post("/api/auth", async (req, res) => {
   const { initData } = req.body;
@@ -71,49 +52,117 @@ app.post("/api/auth", async (req, res) => {
     return res.status(400).json({ error: "Missing init data" });
   }
 
-  // Verify the data comes from Telegram
-  if (!verifyTelegramWebAppData(initData)) {
-    return res.status(403).json({ error: "Invalid authentication" });
-  }
+  console.log("Received init data:", initData);
 
-  // Extract user info from init data
-  const parsedInitData = Object.fromEntries(new URLSearchParams(initData));
-  const user = JSON.parse(parsedInitData.user);
-
-  // Get additional user data using Telegram Bot API if needed
   try {
-    // You can fetch more user details if needed
-    const response = await axios.get(
-      `https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=${user.id}`
-    );
-    const additionalUserData = response.data.result;
+    const parsedInitData = new InitData(initData);
 
-    return res.json({
-      authenticated: true,
-      user: {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        username: user.username,
-        photo_url: user.photo_url,
-        // Add any additional fields from the getChat response
-        bio: additionalUserData.bio,
-        profile_photos: additionalUserData.photo,
-      },
-    });
+    const isValid = await validateInitData(parsedInitData, BOT_TOKEN);
+
+    if (!isValid) {
+      console.log("Invalid init data");
+      return res.status(403).json({ error: "Invalid authentication" });
+    }
+
+    console.log("Valid init data");
+
+    const user = parsedInitData.user;
+
+    try {
+      const response = await axios.get(
+        `https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=${user.id}`
+      );
+      const additionalUserData = response.data.result;
+
+      return res.json({
+        authenticated: true,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          username: user.username,
+          language_code: user.language_code,
+          bio: additionalUserData.bio,
+          profile_photos: additionalUserData.photo,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      return res.json({
+        authenticated: true,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          username: user.username,
+          language_code: user.language_code,
+        },
+      });
+    }
   } catch (error) {
-    console.error("Error fetching user data:", error);
-    // Return basic data even if additional fetch fails
-    return res.json({
-      authenticated: true,
-      user: {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        username: user.username,
-        photo_url: user.photo_url,
-      },
-    });
+    console.error("Error processing init data:", error);
+    return res.status(400).json({ error: "Invalid init data" });
+  }
+});
+
+// Endpoint to get balance
+app.get("/api/getBalance", async (req, res) => {
+  try {
+    const provider = new ethers.JsonRpcProvider(process.env.SCROLL_RPC_URL);
+    const privateKey = process.env.PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error("Private key is not defined");
+    }
+    const wallet = new ethers.Wallet(privateKey, provider);
+    const contractAddress = process.env.SETB_CONTRACT_ADDRESS;
+
+    if (!contractAddress) {
+      throw new Error("Contract address is not defined");
+    }
+
+    const abi = ["function balanceOf(address owner) view returns (uint256)"];
+
+    const contract = new ethers.Contract(contractAddress, abi, wallet);
+    const balance = await contract.balanceOf(wallet.address);
+
+    res.setHeader("Content-Type", "application/json");
+    res.json({ balance: balance.toString() });
+  } catch (error) {
+    console.error("Error fetching balance:", error);
+    res.status(500).json({ error: "Error fetching balance" });
+  }
+});
+
+app.post("/transfer", async (req, res) => {
+  const { amount } = req.body;
+  const receiverAddress = "0xa25347e4fd683dA05C849760b753a4014265254e";
+
+  try {
+    const provider = new ethers.JsonRpcProvider(process.env.SCROLL_RPC_URL);
+    const privateKey = process.env.PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error("Private key is not defined");
+    }
+    const wallet = new ethers.Wallet(privateKey, provider);
+    const contractAddress = process.env.SETB_CONTRACT_ADDRESS;
+
+    if (!contractAddress) {
+      throw new Error("Contract address is not defined");
+    }
+
+    const abi = [
+      "function transfer(address to, uint256 amount) public returns (bool)",
+    ];
+
+    const contract = new ethers.Contract(contractAddress, abi, wallet);
+    const amountInWei = ethers.parseUnits(amount.toString(), 8);
+    const tx = await contract.transfer(receiverAddress, amountInWei);
+    await tx.wait();
+
+    res.json({ success: true, transactionHash: tx.hash });
+  } catch (error) {
+    console.error("Error processing transfer:", error);
+    res.status(500).json({ error: "Error processing transfer" });
   }
 });
 
