@@ -45,6 +45,7 @@ bot.on("message", async (msg) => {
 // Endpoint to get balance
 app.get("/api/getBalance", async (req, res) => {
   try {
+
     const provider = new ethers.JsonRpcProvider(process.env.SCROLL_RPC_URL);
     const privateKey = process.env.PRIVATE_KEY;
     if (!privateKey) {
@@ -60,7 +61,11 @@ app.get("/api/getBalance", async (req, res) => {
     const abi = ["function balanceOf(address owner) view returns (uint256)"];
 
     const contract = new ethers.Contract(contractAddress, abi, wallet);
-    const balance = await contract.balanceOf(wallet.address);
+    // const balance = await contract.balanceOf(wallet.address);
+    const balance = await provider.call({
+      to: contractAddress,
+      data: contract.interface.encodeFunctionData("balanceOf", [wallet.address])
+    });
 
     res.setHeader("Content-Type", "application/json");
     res.json({ balance: balance.toString() });
